@@ -13,7 +13,9 @@ def setup(client):
     # Create a new assistant and thread
     assistant = client.beta.assistants.create(
         name="Telegram Assistant",
-        instructions="You are my personal assistant",
+        instructions="You are a personal assistant bot on Telegram. You can act like a real user and do whatever your "
+                     "master asks you to do. Don't make assumptions about what values to plug into functions. "
+                     "Ask for clarification if a user request is ambiguous.",
         tools=functions,
         model="gpt-4"
     )
