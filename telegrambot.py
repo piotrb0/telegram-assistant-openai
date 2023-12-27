@@ -36,6 +36,12 @@ class_logger = logging.getLogger(__name__)
 
 class TelegramBot:
     def __init__(self, session_file: str, sessions_folder: str = "sessions") -> None:
+        """
+        Class to create user Telegram bots. Can use Opentele for undetected bots (using official API)
+
+        :param session_file: Session file path, can be .session file for Telethon or tdata folder for Opentele
+        :param sessions_folder: folder with .session or tdata files
+        """
         print(f'Created a new bot! Session: {session_file}')
 
         # Change it to make the proxies work
@@ -48,6 +54,10 @@ class TelegramBot:
         self.session_file_path = f'{sessions_folder}/{session_file}'
 
     async def disconnect(self) -> None:
+        """
+        Disconnect the bot
+        :return: None
+        """
         try:
             await self.client.disconnect()
             print("Disconnected!")
@@ -62,6 +72,11 @@ class TelegramBot:
         class_logger.debug(f'{self.session_file}: Connected!')
 
     async def login_telethon(self, api_id: int, api_hash: str) -> None:
+        """
+        Login to the bot using Telethon
+        :param api_id: Telegram API ID
+        :param api_hash: Telegram API hash
+        """
         # self.client = TelegramClient(session_file_path, api_id, api_hash)
         self.client = TelegramClientTelethon(self.session_file_path, api_id=api_id, api_hash=api_hash, timeout=20)
 
