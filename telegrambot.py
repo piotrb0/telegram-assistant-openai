@@ -55,9 +55,15 @@ class TelegramBot:
             class_logger.error(f'{self.session_file}: ERROR DISCONNECTING! :{e1}')
             print("ERROR DISCONNECTING!")
 
+    async def connect(self) -> None:
+        print("Connecting...")
+        await asyncio.wait_for(self.client.connect(), 20)
+
+        class_logger.debug(f'{self.session_file}: Connected!')
+
     async def login_telethon(self, api_id: int, api_hash: str) -> None:
         # self.client = TelegramClient(session_file_path, api_id, api_hash)
         self.client = TelegramClientTelethon(self.session_file_path, api_id=api_id, api_hash=api_hash, timeout=20)
 
-        await self.client.connect()
+        await self.connect()
 
