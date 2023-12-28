@@ -319,7 +319,7 @@ class TelegramAssistant(TelegramBot):
 
                 groups_to_watch = []
                 for group in cursor.fetchall():
-                    groups_to_watch.append(group[0])
+                    groups_to_watch.append(group[0].replace('@', '').replace('https://t.me/', ''))
 
                 return {'success': True, 'info': groups_to_watch, 'error': None}
 
@@ -339,6 +339,7 @@ class TelegramAssistant(TelegramBot):
             with sqlite3.connect('assistant.db') as conn:
                 cursor = conn.cursor()
 
+                group_username = group_username.replace('@', '').replace('https://t.me/', '')
                 cursor.execute('INSERT INTO groups_to_watch (group_username) VALUES (?)', (group_username,))
                 conn.commit()
 
@@ -361,6 +362,7 @@ class TelegramAssistant(TelegramBot):
             with sqlite3.connect('assistant.db') as conn:
                 cursor = conn.cursor()
 
+                group_username = group_username.replace('@', '').replace('https://t.me/', '')
                 cursor.execute('DELETE FROM groups_to_watch WHERE group_username = ?', (group_username,))
                 conn.commit()
 
