@@ -34,6 +34,12 @@ class TelegramAssistant(TelegramBot):
         self.whitelist_users_list = whitelist_users_list
         self.service_group_username = service_group_username
 
+        # Load the groups to watch from the db
+        self.groups_to_watch = self.get_groups_to_watch()['info']
+        print(f"Groups to watch: {self.groups_to_watch}")
+
+        self.initialize_database()
+
         script_dir = os.path.dirname(__file__)
         session_file_path = os.path.join(script_dir, f'{sessions_folder}/{self.session_file}')
 
@@ -53,8 +59,29 @@ class TelegramAssistant(TelegramBot):
         # Login
         await self.login_telethon(6, 'eb06d4abfb49dc3eeb1aeb98ae0f581e')
 
+        # Check if the bot is in the service group and if not, join it
+        if not await self.is_bot_in_group(self.service_group_username):
+            await self.join_channel(self.service_group_username)
+
         await self.client.PrintSessions()
 
+    def initialize_database(self) -> None:
+        """
+        Initializes the SQLite database with tables for storing information about
+        groups/channels and messages.
+        """
+        with sqlite3.connect('assistant.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('''CREATE TABLE IF NOT EXISTS joined_groups
+                           (id INTEGER PRIMARY KEY, entity TEXT, access_hash TEXT, timestamp_joined INTEGER)''')
+
+            cursor.execute('''CREATE TABLE IF NOT EXISTS messages
+                           (id INTEGER PRIMARY KEY, from_id INTEGER, group_username TEXT, 
+                           message TEXT, timestamp_sent INTEGER)''')
+
+            cursor.execute('''CREATE TABLE IF NOT EXISTS groups_to_watch
+                           (id INTEGER PRIMARY KEY, group_username TEXT)''')
+            conn.commit()
 
     async def get_response(self, message):
         self.openai_assistant.add_message_to_thread(message)
@@ -91,11 +118,24 @@ class TelegramAssistant(TelegramBot):
             else:
                 raise Exception("The bot failed to respond to the action.")
 
-    async def call_action(self, function: str, kwargs: Dict[str, str]):
+    async def call_action(self, function: str, kwargs: Dict[str, str]) -> str:
+        """
+        Calls an action with the provided arguments.
 
-        print(f"Calling action {function} with args {kwargs}")
-
-        return "test"
+        :param function: The name of the function to call.
+        :param kwargs: A dictionary containing the arguments to pass to the function.
+        :return: The output of the function.
+        """
+        if function == "get_data_from_db":
+            return str(self.get_data_from_db(**kwargs))
+        elif function == "is_bot_in_group":
+            return str(await self.is_bot_in_group(**kwargs))
+        elif function == "get_conversation_history":
+            return str(await self.get_conversation_history(**kwargs))
+        elif function == "get_groups_to_watch":
+            return str(self.get_groups_to_watch())
+        elif function == "add_group_to_watchlist":
+            return str(self.add_group_to_watchlist(**kwargs))
 
     async def event_handler(self, event) -> None:
         """
@@ -131,6 +171,113 @@ class TelegramAssistant(TelegramBot):
                 # Respond
                 await event.respond(response)
 
+            # Message in a group or channel
+            elif event.chat.username in self.groups_to_watch:
+                print("Received a message in a group or channel!")
+
+                # group_id = event.message.peer_id.channel_id
+                group_username = event.chat.username
+                from_id = event.message.from_id
+                with sqlite3.connect('assistant.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        'INSERT INTO messages (from_id, group_username, message, timestamp_sent) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+                        (from_id, group_username, event.raw_text))
+                    conn.commit()
+
+    async def is_bot_in_group(self, entity: str) -> dict[str, Union[str, bool, None]]:
+        """
+        Checks if the bot is in a group or channel.
+
+        :param entity: The username or ID of the group or channel.
+        :return: A dictionary containing the result of the check, info == True if the bot is in the group or channel,
+        info == False if the bot is not in the group or channel, and error == None if the check was successful,
+        otherwise error contains the error message.
+        """
+        try:
+            async for dialog in self.client.iter_dialogs():
+                print(dialog.entity.username)
+                if dialog.entity.username == entity:
+                    return {'success': True, 'info': True, 'error': None}
+
+            return {'success': True, 'info': False, 'error': None}
+        except Exception as e:
+            print(e)
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    async def change_profilepic(self, pic):
+        """
+        Changes the profile picture to the provided image.
+        :param pic:
+        :return:
+        """
+        await self.client(UploadProfilePhotoRequest(
+            file=await self.client.upload_file(pic)
+        ))
+
+    async def delete_old_profile_photo(self):
+        """
+        Deletes the old profile photo.
+        :return:
+        """
+        try:
+            print("Deleting the old profile photo...")
+            p = await self.client.get_profile_photos('me')
+            p = p[-1]
+            await self.client(DeletePhotosRequest(
+                id=[InputPhoto(
+                    id=p.id,
+                    access_hash=p.access_hash,
+                    file_reference=p.file_reference
+                )]
+            ))
+        except Exception as e:
+            print(e)
+
+
+    async def add_comment(self, entity: str, message: str,
+                          comment_to_message_id: int, schedule: timedelta = None) -> dict[str, Union[str, bool, None]]:
+        """
+        Adds a comment to a specified group or channel.
+
+        :param entity: The username or ID of the channel or group to send the message to.
+        :param message: The message to send.
+        :param comment_to_message_id: The message to reply to.
+        :param schedule: The time to wait before sending the message.
+        :return: A dictionary containing the result of the query, info == True if the message was sent successfully,
+        otherwise info == False, and error == None if the query was successful, otherwise error contains the error
+        message.
+        """
+        try:
+            comment = await self.client.send_message(entity=entity, message=message, comment_to=comment_to_message_id,
+                                                     schedule=schedule)
+
+            print(comment)
+            return {'success': True, 'info': None, 'error': None}
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    async def get_conversation_history(self, entity: str, limit: int = 20) -> dict[str, Union[None, bool, list[Any]]]:
+        """
+        Gets the conversation history for a specified group, channel or user.
+
+        :param entity: The username or ID of the channel, group or user to get the conversation history for.
+        :param limit: The number of messages to retrieve. Defaults to 20.
+        :return: A dictionary containing the result of the query, info contains the list of the messages if successful,
+        otherwise info is None, success == True if the query was successful, otherwise success == False, and error
+        contains the error message if the query failed, otherwise error is None.
+        """
+        try:
+            messages = []
+            async for message in self.client.iter_messages(entity, limit=limit):
+                # print(message)
+                sender = await message.get_sender()
+                messages.append(
+                    {'id': message.id, 'sender': sender.username, 'text': message.text, 'date': message.date})
+            return {'success': True, 'info': messages, 'error': None}
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
     async def run(self) -> None:
         """
         Starts the Telegram client and listens for events.
@@ -138,3 +285,87 @@ class TelegramAssistant(TelegramBot):
         self.client.add_event_handler(self.event_handler, events.NewMessage(incoming=True))
         print("Running Telegram Assistant...")
         await self.client.run_until_disconnected()
+
+    def get_data_from_db(self, query: str) -> dict[str, Union[None, bool, list[Any]]]:
+        """
+        Use this function to get the data from the database. Input should be a fully formed SQL query.
+
+        :param query: The query to execute.
+        :return: A dictionary containing the result of the query, info contains the result of the query if successful,
+        otherwise info is None, success == True if the query was successful, otherwise success == False, and error
+        contains the error message if the query failed, otherwise error is None.
+        """
+        try:
+            with sqlite3.connect('assistant.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute(query)
+                return {'success': True, 'info': cursor.fetchall(), 'error': None}
+
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    def get_groups_to_watch(self) -> dict[str, Union[None, bool, list[str]]]:
+        """
+        Gets the groups to watch from the database.
+
+        :return: A dictionary containing the result of the query, info contains the result of the query if successful,
+        otherwise info is None, success == True if the query was successful, otherwise success == False, and error
+        contains the error message if the query failed, otherwise error is None.
+        """
+        try:
+            with sqlite3.connect('assistant.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT group_username FROM groups_to_watch')
+
+                groups_to_watch = []
+                for group in cursor.fetchall():
+                    groups_to_watch.append(group[0])
+
+                return {'success': True, 'info': groups_to_watch, 'error': None}
+
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    def add_group_to_watchlist(self, group_username: str) -> dict[str, Union[None, bool, str]]:
+        """
+        Adds a group to the watchlist.
+
+        :param group_username: The group to add to the watchlist.
+        :return: A dictionary containing the result of the query, info contains the result of the query if successful,
+        otherwise info is None, success == True if the query was successful, otherwise success == False, and error
+        contains the error message if the query failed, otherwise error is None.
+        """
+        try:
+            with sqlite3.connect('assistant.db') as conn:
+                cursor = conn.cursor()
+
+                cursor.execute('INSERT INTO groups_to_watch (group_username) VALUES (?)', (group_username,))
+                conn.commit()
+
+                self.groups_to_watch = self.get_groups_to_watch()['info']
+                return {'success': True, 'info': None, 'error': None}
+
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    def remove_group_from_watchlist(self, group_username: str) -> dict[str, Union[None, bool, str]]:
+        """
+        Removes a group from the watchlist.
+
+        :param group_username: The group to remove from the watchlist.
+        :return: A dictionary containing the result of the query, info contains the result of the query if successful,
+        otherwise info is None, success == True if the query was successful, otherwise success == False, and error
+        contains the error message if the query failed, otherwise error is None.
+        """
+        try:
+            with sqlite3.connect('assistant.db') as conn:
+                cursor = conn.cursor()
+
+                cursor.execute('DELETE FROM groups_to_watch WHERE group_username = ?', (group_username,))
+                conn.commit()
+
+                self.groups_to_watch = self.get_groups_to_watch()['info']
+                return {'success': True, 'info': None, 'error': None}
+
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
