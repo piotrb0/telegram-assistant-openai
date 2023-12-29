@@ -1,0 +1,212 @@
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "is_bot_in_group",
+            "description": "Checks if the bot is in a group or channel.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the group or channel."
+                    }
+                },
+                "required": ["entity"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "join_channel",
+            "description": "Joins a channel or group and adds it to the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the channel or group to join."
+                    }
+                },
+                "required": ["entity"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "leave_channel",
+            "description": "Leaves a channel or group and removes it from the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the channel or group to leave."
+                    }
+                },
+                "required": ["entity"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_message",
+            "description": "Sends a message to a specified group or channel.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the channel or group to send the message to."
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "The message to send."
+                    }
+                },
+                "required": ["entity", "message"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_conversation_history",
+            "description": "Gets the conversation history for a specified group, channel or user.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the channel, group or user to get the conversation history for."
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "The number of messages to retrieve. Defaults to 20."
+                    }
+                },
+                "required": ["entity"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_data_from_db",
+            "description": "Use this function to get the data from the database. Input should be a fully formed SQL query. SQL should be written using this database schema:\n Table: joined_groups\nColumns: id, entity, access_hash, timestamp_joined\nTable: messages\nColumns: id, from_id, group_username, message, timestamp_sent\nTable: groups_to_watch\nColumns: id, group_username\n The query should be returned in plain text, not in JSON.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The query to execute."
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_groups_to_watch",
+            "description": "Gets the groups to watch from the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_group_to_watchlist",
+            "description": "Adds a group to the watchlist.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "group_username": {
+                        "type": "string",
+                        "description": "The group to add to the watchlist."
+                    }
+                },
+                "required": ["group_username"]
+            }
+        }
+    },
+        {
+        "type": "function",
+        "function": {
+            "name": "remove_group_from_watchlist",
+            "description": "Removes a group from the watchlist.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "group_username": {
+                        "type": "string",
+                        "description": "The group to remove from the watchlist."
+                    }
+                },
+                "required": ["group_username"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_message",
+            "description": "Sends a message to a specified group or channel.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the channel or group to send the message to."
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "The message to send."
+                    },
+                    "schedule": {
+                        "type": "string",
+                        "description": "The time to wait before sending the message. Timedelta is serialized as a string (e.g., '1d', '1h')"
+                    }
+                },
+                "required": ["entity", "message"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_comment",
+            "description": "Adds a comment to a specified group or channel.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "entity": {
+                        "type": "string",
+                        "description": "The username or ID of the channel or group to send the message to."
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "The message to send."
+                    },
+                    "comment_to_message_id": {
+                        "type": "integer",
+                        "description": "The message to reply to."
+                    },
+                    "schedule": {
+                        "type": "string",
+                        "description": "The time to wait before sending the message. Timedelta is serialized as a string (e.g., '1d', '1h')"
+                    }
+                },
+                "required": ["entity", "message", "comment_to_message_id"]
+            }
+        }
+    }
+]
