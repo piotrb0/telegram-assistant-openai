@@ -1,33 +1,10 @@
 """Advanced Telegram class bot to import in different modules
 Supporting proxies, official TG API"""
-import configparser
-import csv
-import json
 import os
-import random
-import re
-import string
-import time
-
-import socks
-from telethon import events
-from telethon.tl.functions.channels import JoinChannelRequest
-from telethon.tl.functions.account import UpdateProfileRequest, UpdateUsernameRequest
-from telethon.tl.functions.photos import UploadProfilePhotoRequest
-from telethon.tl.functions.messages import StartBotRequest
-from telethon.tl.functions.messages import ImportChatInviteRequest
-from telethon import errors
 from telethon import TelegramClient as TelegramClientTelethon
 
 import asyncio
 import logging
-
-import concurrent
-from concurrent.futures import ThreadPoolExecutor
-
-from opentele.td import TDesktop
-from opentele.tl import TelegramClient
-from opentele.api import API, UseCurrentSession
 
 SCRIPT_DIR = os.path.dirname(__file__)
 
