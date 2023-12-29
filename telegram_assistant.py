@@ -130,6 +130,12 @@ class TelegramAssistant(TelegramBot):
             return str(self.get_data_from_db(**kwargs))
         elif function == "is_bot_in_group":
             return str(await self.is_bot_in_group(**kwargs))
+        elif function == "join_channel":
+            return str(await self.join_channel(**kwargs))
+        elif function == "leave_channel":
+            return str(await self.leave_channel(**kwargs))
+        elif function == "send_message":
+            return str(await self.send_message(**kwargs))
         elif function == "get_conversation_history":
             return str(await self.get_conversation_history(**kwargs))
         elif function == "get_groups_to_watch":
@@ -234,6 +240,66 @@ class TelegramAssistant(TelegramBot):
         except Exception as e:
             print(e)
 
+    async def join_channel(self, entity: str) -> dict[str, Union[str, bool, None]]:
+        """
+        Joins a channel or group and adds it to the database.
+
+        :param entity: The username or ID of the channel or group to join.
+        :return: A dictionary containing the result of the query, info == True if the channel or group was joined
+        successfully, otherwise info == False, and error == None if the query was successful, otherwise error contains
+        the error message.
+        """
+        try:
+            print("Joining the channel...")
+            await self.client(JoinChannelRequest(entity))
+            entity_obj = await self.client.get_entity(entity)
+            with sqlite3.connect('assistant.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    'INSERT INTO joined_groups (entity, access_hash, timestamp_joined) VALUES (?, ?, CURRENT_TIMESTAMP)',
+                    (entity_obj.username, str(entity_obj.access_hash)))
+                conn.commit()
+
+            return {'success': True, 'info': None, 'error': None}
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    async def leave_channel(self, entity: str) -> dict[str, Union[str, bool, None]]:
+        """
+        Leaves a channel or group and removes it from the database.
+
+        :param entity: The username or ID of the channel or group to leave.
+        :return: A dictionary containing the result of the query, info == True if the channel or group was left
+        successfully, otherwise info == False, and error == None if the query was successful, otherwise error contains
+        the error message.
+        """
+        try:
+            await self.client(LeaveChannelRequest(entity))
+            with sqlite3.connect('assistant.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM joined_groups WHERE entity = ?', (entity,))
+                conn.commit()
+
+            return {'success': True, 'info': None, 'error': None}
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
+
+    async def send_message(self, entity: str, message: str, schedule: timedelta = None) -> dict[str, Union[str, bool, None]]:
+        """
+        Sends a message to a specified group or channel.
+
+        :param entity: The username or ID of the channel or group to send the message to.
+        :param message: The message to send.
+        :param schedule: The time to wait before sending the message.
+        :return: A dictionary containing the result of the query, info == True if the message was sent successfully,
+        otherwise info == False, and error == None if the query was successful, otherwise error contains the error
+        message.
+        """
+        try:
+            await self.client.send_message(entity, message, schedule=schedule)
+            return {'success': True, 'info': None, 'error': None}
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
 
     async def add_comment(self, entity: str, message: str,
                           comment_to_message_id: int, schedule: timedelta = None) -> dict[str, Union[str, bool, None]]:
