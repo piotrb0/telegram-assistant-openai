@@ -217,9 +217,13 @@ class TelegramAssistant(TelegramBot):
         :param pic:
         :return:
         """
-        await self.client(UploadProfilePhotoRequest(
-            file=await self.client.upload_file(pic)
-        ))
+        try:
+            await self.client(UploadProfilePhotoRequest(
+                file=await self.client.upload_file(pic)
+            ))
+            return {'success': True, 'info': None, 'error': None}
+        except Exception as e:
+            return {'success': False, 'info': None, 'error': str(e)}
 
     async def delete_old_profile_photo(self):
         """
@@ -237,8 +241,9 @@ class TelegramAssistant(TelegramBot):
                     file_reference=p.file_reference
                 )]
             ))
+            return {'success': True, 'info': None, 'error': None}
         except Exception as e:
-            print(e)
+            return {'success': False, 'info': None, 'error': str(e)}
 
     async def join_channel(self, entity: str) -> dict[str, Union[str, bool, None]]:
         """
