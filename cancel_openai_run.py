@@ -10,11 +10,10 @@ if __name__ == "__main__":
 
     client = OpenAI(api_key=OPENAI_API_KEY)
     runs = client.beta.threads.runs.list(THREAD)
-    print(runs)
 
     for run in runs:
         # Cancel the run if it's still running
-        if run.status == "running":
+        if run.status in ["running", "requires_action"]:
             print(f"Canceling run {run.id}")
             client.beta.threads.runs.cancel(
                 thread_id=THREAD,
