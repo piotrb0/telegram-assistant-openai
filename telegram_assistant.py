@@ -214,8 +214,10 @@ class TelegramAssistant(TelegramBot):
     async def change_profilepic(self, pic):
         """
         Changes the profile picture to the provided image.
-        :param pic:
-        :return:
+        :param pic: New profile picture
+        :return: A dictionary containing the result of the query, info == True photo has been changed successfully,
+        otherwise info == False, and error == None if the query was successful, otherwise error contains
+        the error message.
         """
         try:
             await self.client(UploadProfilePhotoRequest(
@@ -228,7 +230,9 @@ class TelegramAssistant(TelegramBot):
     async def delete_old_profile_photo(self):
         """
         Deletes the old profile photo.
-        :return:
+        :return: A dictionary containing the result of the query, info == True if the profile photo was deleted
+        successfully, otherwise info == False, and error == None if the query was successful, otherwise error contains
+        the error message.
         """
         try:
             print("Deleting the old profile photo...")
