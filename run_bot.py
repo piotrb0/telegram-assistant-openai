@@ -8,7 +8,7 @@ from telegram_assistant import TelegramAssistant
 from data import *
 
 if __name__ == '__main__':
-    bot = TelegramAssistant(SESSION_FILE, SESSIONS_FOLDER, ['x'], 'x', ASSISTANT_ID,
+    bot = TelegramAssistant(SESSION_FILE, SESSIONS_FOLDER, API_ID, API_HASH, ['x'], 'x', ASSISTANT_ID,
                             THREAD_ID)
 
     asyncio.get_event_loop().run_until_complete(bot.start())

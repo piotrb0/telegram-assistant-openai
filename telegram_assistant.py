@@ -18,9 +18,8 @@ class TelegramAssistant(TelegramBot):
     A class to create a Telegram Assistant using the Telethon library.
     """
 
-    def __init__(self, session_file: str, sessions_folder: str, whitelist_users_list: List[str],
-                 service_group_username: str,
-                 assistant_id: str, thread_id: str):
+    def __init__(self, session_file: str, sessions_folder: str, api_id: int, api_hash: str,
+                 whitelist_users_list: List[str], service_group_username: str, assistant_id: str, thread_id: str):
         """
         Initializes the Telegram Assistant with the provided API id, hash, bot token,
         list of whitelisted users, and service group username.
@@ -28,7 +27,7 @@ class TelegramAssistant(TelegramBot):
         # self.client = TelegramClient('assistant', api_id, api_hash).start(bot_token=bot_token)
 
         # proxy_ip = None
-        super().__init__(session_file, sessions_folder=sessions_folder)
+        super().__init__(session_file, api_id, api_hash, sessions_folder=sessions_folder)
         print(f'Created new bot! Phone: {session_file}')
 
         self.whitelist_users_list = whitelist_users_list
@@ -57,13 +56,11 @@ class TelegramAssistant(TelegramBot):
     async def start(self):
 
         # Login
-        await self.login_telethon(6, 'eb06d4abfb49dc3eeb1aeb98ae0f581e')
+        await self.login_telethon()
 
         # Check if the bot is in the service group and if not, join it
         if not await self.is_bot_in_group(self.service_group_username):
             await self.join_channel(self.service_group_username)
-
-        await self.client.PrintSessions()
 
     def initialize_database(self) -> None:
         """
@@ -103,7 +100,6 @@ class TelegramAssistant(TelegramBot):
             print(f"Running action {function} with args {args}")
 
             action_output = await self.call_action(function, args)
-            # action_output = asyncio.run(self.call_action(function, args))
 
             print(f"Action output: {action_output}")
 

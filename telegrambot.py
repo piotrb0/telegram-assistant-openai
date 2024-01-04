@@ -12,7 +12,7 @@ class_logger = logging.getLogger(__name__)
 
 
 class TelegramBot:
-    def __init__(self, session_file: str, sessions_folder: str = "sessions") -> None:
+    def __init__(self, session_file: str, api_id: int, api_hash: str, sessions_folder: str = "sessions") -> None:
         """
         Class to create user Telegram bots. Can use Opentele for undetected bots (using official API)
 
@@ -25,6 +25,8 @@ class TelegramBot:
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
         self.session_file = session_file
+        self.api_id = api_id
+        self.api_hash = api_hash
 
         self.sessions_folder = sessions_folder
         self.client = None
@@ -48,14 +50,15 @@ class TelegramBot:
 
         class_logger.debug(f'{self.session_file}: Connected!')
 
-    async def login_telethon(self, api_id: int, api_hash: str) -> None:
+    async def login_telethon(self) -> None:
         """
         Login to the bot using Telethon
         :param api_id: Telegram API ID
         :param api_hash: Telegram API hash
         """
         # self.client = TelegramClient(session_file_path, api_id, api_hash)
-        self.client = TelegramClientTelethon(self.session_file_path, api_id=api_id, api_hash=api_hash, timeout=20)
+        print(self.session_file_path)
+        self.client = TelegramClientTelethon(self.session_file_path, api_id=self.api_id, api_hash=self.api_hash, timeout=20)
 
         await self.connect()
 
