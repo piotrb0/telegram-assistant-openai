@@ -1,3 +1,5 @@
-/config.ini
+*.ini
 *.xml
 /.idea/
+/assistant.db
+/sessions/
