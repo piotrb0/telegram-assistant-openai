@@ -22,3 +22,8 @@ THREAD_ID = config['ASSISTANT']['THREAD_ID']
 SESSION_FILE = config['SESSION']['SESSION_FILE']
 API_ID = config['SESSION']['API_ID']
 API_HASH = config['SESSION']['API_HASH']
+
+IP = config['PROXY']['IP']
+PORT = config['PROXY']['PORT']
+USERNAME = config['PROXY']['USERNAME']
+PASSWORD = config['PROXY']['PASSWORD']
