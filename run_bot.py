@@ -11,6 +11,8 @@ if __name__ == '__main__':
     bot = TelegramAssistant(SESSION_FILE, SESSIONS_FOLDER, API_ID, API_HASH, ['x'], 'x', ASSISTANT_ID,
                             THREAD_ID)
 
-    asyncio.get_event_loop().run_until_complete(bot.start())
+    asyncio.get_event_loop().run_until_complete(bot.start('1', 8080,
+                                                          'a',
+                                                          'a'))
 
     asyncio.get_event_loop().run_until_complete(bot.run())

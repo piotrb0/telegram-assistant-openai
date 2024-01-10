@@ -5,6 +5,7 @@ from telethon import TelegramClient as TelegramClientTelethon
 
 import asyncio
 import logging
+import socks
 
 SCRIPT_DIR = os.path.dirname(__file__)
 
@@ -50,15 +51,24 @@ class TelegramBot:
 
         class_logger.debug(f'{self.session_file}: Connected!')
 
-    async def login_telethon(self) -> None:
+    async def login_telethon(self, proxy_ip: str = None, proxy_port: int = None, proxy_username: str = None,
+                             proxy_password: str = None) -> None:
         """
         Login to the bot using Telethon
-        :param api_id: Telegram API ID
-        :param api_hash: Telegram API hash
+        :param proxy_ip: Proxy IP (optional)
+        :param proxy_port: Proxy port (optional)
+        :param proxy_username: Proxy username (optional)
+        :param proxy_password: Proxy password (optional)
         """
         # self.client = TelegramClient(session_file_path, api_id, api_hash)
         print(self.session_file_path)
-        self.client = TelegramClientTelethon(self.session_file_path, api_id=self.api_id, api_hash=self.api_hash, timeout=20)
 
+        if all([proxy_ip, proxy_port, proxy_username, proxy_password]):
+            print(f'Connecting with proxy: {proxy_ip}:{proxy_port}')
+            proxy = (socks.HTTP, proxy_ip, proxy_port, True, proxy_username, proxy_password)
+            self.client = TelegramClientTelethon(self.session_file_path, api_id=self.api_id, api_hash=self.api_hash,
+                                                 timeout=20, proxy=proxy)
+        else:
+            self.client = TelegramClientTelethon(self.session_file_path, api_id=self.api_id, api_hash=self.api_hash,
+                                                 timeout=20)
         await self.connect()
-

@@ -53,10 +53,11 @@ class TelegramAssistant(TelegramBot):
 
         print("Connecting...")
 
-    async def start(self):
+    async def start(self, proxy_ip: str = None, proxy_port: int = None, proxy_username: str = None,
+                    proxy_password: str = None):
 
         # Login
-        await self.login_telethon()
+        await self.login_telethon(proxy_ip, proxy_port, proxy_username, proxy_password)
 
         # Check if the bot is in the service group and if not, join it
         if not await self.is_bot_in_group(self.service_group_username):
@@ -289,7 +290,8 @@ class TelegramAssistant(TelegramBot):
         except Exception as e:
             return {'success': False, 'info': None, 'error': str(e)}
 
-    async def send_message(self, entity: str, message: str, schedule: timedelta = None) -> dict[str, Union[str, bool, None]]:
+    async def send_message(self, entity: str, message: str, schedule: timedelta = None) -> dict[
+        str, Union[str, bool, None]]:
         """
         Sends a message to a specified group or channel.
 
