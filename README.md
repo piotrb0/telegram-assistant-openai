@@ -1,0 +1,1 @@
+A Telegram user bot (made with Telethon) that acts as your personal assistant. It is connected to the OpenAI API to answer even the most difficult questions! Some functions of real-life users already built in (like sending DM, joining a group or channel)
